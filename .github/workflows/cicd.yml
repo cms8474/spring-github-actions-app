@@ -40,11 +40,24 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Download build artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: app
-          path: build/libs/
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ec2-ip-address >> ~/.ssh/known_hosts
+
+      - name: Deploy with SSH
+        run: |
+          scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no build/libs/*.jar user@host:/path/to/destination/
+          - name: Download build artifact
+            uses: actions/download-artifact@v4
+            with:
+              name: app
+              path: build/libs/
   
       - name: Setup SSH Key
         run: |
